@@ -26,12 +26,10 @@ rules:
   - apiGroups: [batch]
     resources: [jobs, cronjobs]
     verbs: [get, list, watch, create, update, patch, delete]
+  # Read-only on purpose: what is exposed outside the namespace (ingresses) and
+  # which traffic is allowed (network policies) change through review, not kubectl.
   - apiGroups: [networking.k8s.io]
-    resources: [ingresses]
-    verbs: [get, list, watch, create, update, patch, delete]
-  # Read-only on purpose: network rules are changed through review, not kubectl.
-  - apiGroups: [networking.k8s.io]
-    resources: [networkpolicies]
+    resources: [ingresses, networkpolicies]
     verbs: [get, list, watch]
 ---
 # Groups come from the identity provider (OIDC claim, client cert O=...).

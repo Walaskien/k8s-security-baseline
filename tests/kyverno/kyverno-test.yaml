@@ -14,6 +14,7 @@ resources:
   - ../../examples/bad/bad-no-limits.yaml
   - ../../examples/bad/bad-hostpath.yaml
   - ../../examples/bad/bad-privileged-pod.yaml
+  - ../../examples/bad/bad-restricted-only.yaml
   - resources/edge-cases.yaml
 results:
   - policy: disallow-latest-tag
@@ -135,6 +136,26 @@ results:
     isValidatingPolicy: true
     kind: Pod
     resources: [bad-privileged-pod]
+    result: pass
+  - policy: disallow-latest-tag
+    isValidatingPolicy: true
+    kind: Pod
+    resources: [bad-restricted-only]
+    result: pass
+  - policy: require-run-as-non-root
+    isValidatingPolicy: true
+    kind: Pod
+    resources: [bad-restricted-only]
+    result: pass
+  - policy: require-resource-limits
+    isValidatingPolicy: true
+    kind: Pod
+    resources: [bad-restricted-only]
+    result: pass
+  - policy: disallow-hostpath
+    isValidatingPolicy: true
+    kind: Pod
+    resources: [bad-restricted-only]
     result: pass
   - policy: disallow-latest-tag
     isValidatingPolicy: true

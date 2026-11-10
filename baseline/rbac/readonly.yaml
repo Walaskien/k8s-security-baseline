@@ -4,6 +4,7 @@ kind: Role
 metadata:
   name: readonly
   namespace: team-a
+# Secrets are absent on purpose. "get" and "list" on them both return values.
 rules:
   - apiGroups: [""]
     resources: [pods, pods/log, services, endpoints, configmaps, events, resourcequotas]
@@ -17,7 +18,6 @@ rules:
   - apiGroups: [networking.k8s.io]
     resources: [ingresses, networkpolicies]
     verbs: [get, list, watch]
-  # Secrets are absent on purpose. "get" and "list" on them both return values.
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding

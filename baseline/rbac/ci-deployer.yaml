@@ -13,6 +13,8 @@ kind: Role
 metadata:
   name: ci-deployer
   namespace: team-a
+# No delete anywhere: a leaked CI token can roll out a bad image but cannot wipe
+# the namespace. Add delete per resource if you want apply --prune.
 rules:
   - apiGroups: [apps]
     resources: [deployments]
@@ -29,8 +31,6 @@ rules:
   - apiGroups: [networking.k8s.io]
     resources: [ingresses]
     verbs: [get, list, watch, create, update, patch]
-  # No delete anywhere: a leaked CI token can roll out a bad image but cannot
-  # wipe the namespace. Add delete per resource if you want apply --prune.
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding

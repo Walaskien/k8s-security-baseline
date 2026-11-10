@@ -18,10 +18,20 @@ spec:
     spec:
       serviceAccountName: web
       automountServiceAccountToken: false
+      # Preferred, not required: a one-node cluster (kind) must still start both replicas.
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                topologyKey: kubernetes.io/hostname
+                labelSelector:
+                  matchLabels:
+                    app.kubernetes.io/name: web
       securityContext:
         runAsNonRoot: true
-        runAsUser: 101
-        runAsGroup: 101
+        runAsUser: 10101
+        runAsGroup: 10101
         seccompProfile:
           type: RuntimeDefault
       containers:
@@ -52,8 +62,7 @@ spec:
               port: http
             initialDelaySeconds: 10
           volumeMounts:
-            # nginx writes its pid file and temp dirs here; the rest of the
-            # filesystem stays read-only.
+            # nginx needs a writable /tmp; the rest of the filesystem stays read-only.
             - name: tmp
               mountPath: /tmp
       volumes:

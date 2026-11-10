@@ -1,11 +1,11 @@
 ---
 # Breaks nothing in the Kyverno policies on purpose: non-root, limits, pinned tag.
-# Only Pod Security Admission (restricted) refuses it, because of privileged.
+# Only Pod Security Admission refuses it (restricted and baseline both), because of privileged.
+# No namespace here: the e2e script applies it to team-a and to legacy-apps.
 apiVersion: v1
 kind: Pod
 metadata:
   name: bad-privileged-pod
-  namespace: team-a
 spec:
   automountServiceAccountToken: false
   containers:
@@ -15,7 +15,7 @@ spec:
         privileged: true
         allowPrivilegeEscalation: true
         runAsNonRoot: true
-        runAsUser: 101
+        runAsUser: 10101
       resources:
         requests:
           cpu: 50m

@@ -1,5 +1,5 @@
 ---
-# Breaks disallow-hostpath. Everything else is the same as examples/good.
+# Breaks disallow-hostpath only.
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -19,10 +19,20 @@ spec:
     spec:
       serviceAccountName: web
       automountServiceAccountToken: false
+      # Preferred, not required: a one-node cluster (kind) must still start both replicas.
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                topologyKey: kubernetes.io/hostname
+                labelSelector:
+                  matchLabels:
+                    app.kubernetes.io/name: bad-hostpath
       securityContext:
         runAsNonRoot: true
-        runAsUser: 101
-        runAsGroup: 101
+        runAsUser: 10101
+        runAsGroup: 10101
         seccompProfile:
           type: RuntimeDefault
       containers:

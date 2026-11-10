@@ -1,0 +1,23 @@
+---
+# Runs as non-root, has limits and a pinned tag, so Kyverno has no objection. It
+# is missing seccomp, allowPrivilegeEscalation=false and dropped capabilities:
+# refused in team-a (restricted), accepted in legacy-apps (baseline).
+# No namespace here: the e2e script applies it to both.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: bad-restricted-only
+spec:
+  automountServiceAccountToken: false
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 10101
+  containers:
+    - name: web
+      image: nginxinc/nginx-unprivileged:1.30.6-alpine
+      resources:
+        requests:
+          cpu: 50m
+          memory: 32Mi
+        limits:
+          memory: 64Mi
