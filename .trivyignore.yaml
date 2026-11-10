@@ -1,0 +1,27 @@
+# Accepted findings, each with the reason. Everything else fails the build.
+misconfigurations:
+  - id: KSV-0125
+    statement: >-
+      Docker Hub is not on the default registry allow list. An allow list belongs
+      to the cluster (admission policy or registry mirror), not to this example.
+
+  - id: KSV-0040
+    statement: >-
+      Wants hard CPU limits in the quota. CPU limits are not enforced on purpose
+      (throttling, see policies/require-resource-limits.yaml); the quota caps
+      CPU requests and memory limits instead.
+
+  # The three below say "this role can modify workloads, configmaps, services".
+  # That is the job of the developer and ci-deployer roles, inside one namespace
+  # and without Secrets, exec, delete (CI) or RBAC and network policy changes.
+  - id: KSV-0048
+    paths: ["rbac/developer.yaml", "rbac/ci-deployer.yaml"]
+    statement: Workload management is the purpose of these roles.
+  - id: KSV-0049
+    paths: ["rbac/developer.yaml", "rbac/ci-deployer.yaml"]
+    statement: ConfigMap writes are needed to deploy an app; Secrets are not granted.
+  - id: KSV-0056
+    paths: ["rbac/developer.yaml", "rbac/ci-deployer.yaml"]
+    statement: >-
+      Services are part of a deployment. Ingresses are writable only for the CI
+      role, which applies reviewed manifests. Network policies are read-only for everyone.

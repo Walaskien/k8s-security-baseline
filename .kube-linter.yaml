@@ -1,0 +1,15 @@
+# Defaults stay on. These are extra checks that matter for this repo: no Secret
+# access in roles, no wildcard rules, probes present, and every pod covered by a
+# NetworkPolicy.
+checks:
+  include:
+    - access-to-secrets
+    - cluster-admin-role-binding
+    - wildcard-in-rules
+    - default-service-account
+    - no-liveness-probe
+    - no-readiness-probe
+    - non-isolated-pod
+    - read-secret-from-env-var
+    - writable-host-mount
+    - unsafe-proc-mount
