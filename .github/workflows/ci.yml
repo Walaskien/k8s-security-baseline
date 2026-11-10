@@ -1,0 +1,73 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+      - run: pip install -r requirements-dev.txt
+      - run: make lint
+      - run: make workflow-lint
+
+  policies:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      # kyverno test: expected pass/fail per policy and resource, edge cases included.
+      - run: make policy-test
+      # The scanners must flag every bad example and stay quiet on the good one.
+      - run: make negative
+
+  scan:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - run: make scan-config
+      - run: make scan-image
+
+  secrets:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          # gitleaks reads the history too, not only the current files.
+          fetch-depth: 0
+      - run: make secrets
+
+  e2e:
+    needs: [lint, policies]
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: helm/kind-action@v1.15.2
+        with:
+          version: v0.33.0
+          cluster_name: baseline
+          config: kind/kind-config.yaml
+      - name: Install Kyverno
+        run: |
+          helm repo add kyverno https://kyverno.github.io/kyverno/
+          helm install kyverno kyverno/kyverno --version 3.9.2 \
+            --namespace kyverno --create-namespace --wait --timeout 5m
+      - run: scripts/e2e.sh
+      - name: Cluster state on failure
+        if: failure()
+        run: |
+          kubectl get pods -A
+          kubectl get validatingpolicies.policies.kyverno.io
+          kubectl -n kyverno logs deploy/kyverno-admission-controller --tail=100
