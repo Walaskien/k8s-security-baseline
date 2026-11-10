@@ -1,0 +1,11 @@
+---
+# Everything is closed first, then opened one flow at a time. Without Egress in
+# policyTypes a compromised pod could still call out anywhere.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-all
+  namespace: team-a
+spec:
+  podSelector: {}
+  policyTypes: [Ingress, Egress]

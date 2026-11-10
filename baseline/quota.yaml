@@ -1,0 +1,14 @@
+---
+# One tenant should not be able to starve the node with a runaway Deployment.
+# The numbers are a starting point, size them to the real namespace.
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: team-a
+  namespace: team-a
+spec:
+  hard:
+    pods: "20"
+    requests.cpu: "4"
+    requests.memory: 4Gi
+    limits.memory: 8Gi

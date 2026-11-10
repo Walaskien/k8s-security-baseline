@@ -1,0 +1,29 @@
+---
+# Strict namespace: pods that break the restricted profile are refused at admission.
+# Versions are pinned so a cluster upgrade does not change what is allowed overnight.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: team-a
+  labels:
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/enforce-version: v1.31
+    pod-security.kubernetes.io/audit: restricted
+    pod-security.kubernetes.io/audit-version: v1.31
+    pod-security.kubernetes.io/warn: restricted
+    pod-security.kubernetes.io/warn-version: v1.31
+---
+# Landing zone for workloads that cannot meet restricted yet. Baseline blocks the
+# dangerous things (privileged, hostPath, host namespaces); warn shows what is
+# left to fix before the namespace can move to restricted.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: legacy-apps
+  labels:
+    pod-security.kubernetes.io/enforce: baseline
+    pod-security.kubernetes.io/enforce-version: v1.31
+    pod-security.kubernetes.io/audit: restricted
+    pod-security.kubernetes.io/audit-version: v1.31
+    pod-security.kubernetes.io/warn: restricted
+    pod-security.kubernetes.io/warn-version: v1.31

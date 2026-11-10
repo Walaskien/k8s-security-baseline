@@ -1,0 +1,50 @@
+---
+# Not bound to the built-in "edit": edit can read Secrets and exec into pods,
+# and that is how a developer account turns into a credential leak.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: developer
+  namespace: team-a
+rules:
+  - apiGroups: [""]
+    resources: [pods, pods/log, services, endpoints, configmaps, serviceaccounts, events]
+    verbs: [get, list, watch]
+  - apiGroups: [""]
+    resources: [services, configmaps]
+    verbs: [create, update, patch, delete]
+  # Port-forward for debugging, but no pods/exec.
+  - apiGroups: [""]
+    resources: [pods/portforward]
+    verbs: [create]
+  - apiGroups: [apps]
+    resources: [deployments, statefulsets, replicasets, daemonsets]
+    verbs: [get, list, watch]
+  - apiGroups: [apps]
+    resources: [deployments, statefulsets]
+    verbs: [create, update, patch, delete]
+  - apiGroups: [batch]
+    resources: [jobs, cronjobs]
+    verbs: [get, list, watch, create, update, patch, delete]
+  - apiGroups: [networking.k8s.io]
+    resources: [ingresses]
+    verbs: [get, list, watch, create, update, patch, delete]
+  # Read-only on purpose: network rules are changed through review, not kubectl.
+  - apiGroups: [networking.k8s.io]
+    resources: [networkpolicies]
+    verbs: [get, list, watch]
+---
+# Groups come from the identity provider (OIDC claim, client cert O=...).
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: developer
+  namespace: team-a
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: developer
+subjects:
+  - apiGroup: rbac.authorization.k8s.io
+    kind: Group
+    name: team-a-developers
