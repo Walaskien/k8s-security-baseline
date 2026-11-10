@@ -1,0 +1,24 @@
+---
+# Breaks nothing in the Kyverno policies on purpose: non-root, limits, pinned tag.
+# Only Pod Security Admission (restricted) refuses it, because of privileged.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: bad-privileged-pod
+  namespace: team-a
+spec:
+  automountServiceAccountToken: false
+  containers:
+    - name: web
+      image: nginxinc/nginx-unprivileged:1.30.6-alpine
+      securityContext:
+        privileged: true
+        allowPrivilegeEscalation: true
+        runAsNonRoot: true
+        runAsUser: 101
+      resources:
+        requests:
+          cpu: 50m
+          memory: 32Mi
+        limits:
+          memory: 64Mi

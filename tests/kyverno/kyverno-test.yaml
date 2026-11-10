@@ -1,0 +1,193 @@
+apiVersion: cli.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: baseline-policies
+policies:
+  - ../../policies/disallow-latest-tag.yaml
+  - ../../policies/require-run-as-non-root.yaml
+  - ../../policies/require-resource-limits.yaml
+  - ../../policies/disallow-hostpath.yaml
+resources:
+  - ../../examples/good/deployment.yaml
+  - ../../examples/bad/bad-latest-tag.yaml
+  - ../../examples/bad/bad-root.yaml
+  - ../../examples/bad/bad-no-limits.yaml
+  - ../../examples/bad/bad-hostpath.yaml
+  - ../../examples/bad/bad-privileged-pod.yaml
+  - resources/edge-cases.yaml
+results:
+  - policy: disallow-latest-tag
+    isValidatingPolicy: true
+    kind: Deployment
+    resources: [web]
+    result: pass
+  - policy: require-run-as-non-root
+    isValidatingPolicy: true
+    kind: Deployment
+    resources: [web]
+    result: pass
+  - policy: require-resource-limits
+    isValidatingPolicy: true
+    kind: Deployment
+    resources: [web]
+    result: pass
+  - policy: disallow-hostpath
+    isValidatingPolicy: true
+    kind: Deployment
+    resources: [web]
+    result: pass
+  - policy: disallow-latest-tag
+    isValidatingPolicy: true
+    kind: Deployment
+    resources: [bad-latest-tag]
+    result: fail
+  - policy: require-run-as-non-root
+    isValidatingPolicy: true
+    kind: Deployment
+    resources: [bad-latest-tag]
+    result: pass
+  - policy: require-resource-limits
+    isValidatingPolicy: true
+    kind: Deployment
+    resources: [bad-latest-tag]
+    result: pass
+  - policy: disallow-hostpath
+    isValidatingPolicy: true
+    kind: Deployment
+    resources: [bad-latest-tag]
+    result: pass
+  - policy: disallow-latest-tag
+    isValidatingPolicy: true
+    kind: Deployment
+    resources: [bad-root]
+    result: pass
+  - policy: require-run-as-non-root
+    isValidatingPolicy: true
+    kind: Deployment
+    resources: [bad-root]
+    result: fail
+  - policy: require-resource-limits
+    isValidatingPolicy: true
+    kind: Deployment
+    resources: [bad-root]
+    result: pass
+  - policy: disallow-hostpath
+    isValidatingPolicy: true
+    kind: Deployment
+    resources: [bad-root]
+    result: pass
+  - policy: disallow-latest-tag
+    isValidatingPolicy: true
+    kind: Deployment
+    resources: [bad-no-limits]
+    result: pass
+  - policy: require-run-as-non-root
+    isValidatingPolicy: true
+    kind: Deployment
+    resources: [bad-no-limits]
+    result: pass
+  - policy: require-resource-limits
+    isValidatingPolicy: true
+    kind: Deployment
+    resources: [bad-no-limits]
+    result: fail
+  - policy: disallow-hostpath
+    isValidatingPolicy: true
+    kind: Deployment
+    resources: [bad-no-limits]
+    result: pass
+  - policy: disallow-latest-tag
+    isValidatingPolicy: true
+    kind: Deployment
+    resources: [bad-hostpath]
+    result: pass
+  - policy: require-run-as-non-root
+    isValidatingPolicy: true
+    kind: Deployment
+    resources: [bad-hostpath]
+    result: pass
+  - policy: require-resource-limits
+    isValidatingPolicy: true
+    kind: Deployment
+    resources: [bad-hostpath]
+    result: pass
+  - policy: disallow-hostpath
+    isValidatingPolicy: true
+    kind: Deployment
+    resources: [bad-hostpath]
+    result: fail
+  - policy: disallow-latest-tag
+    isValidatingPolicy: true
+    kind: Pod
+    resources: [bad-privileged-pod]
+    result: pass
+  - policy: require-run-as-non-root
+    isValidatingPolicy: true
+    kind: Pod
+    resources: [bad-privileged-pod]
+    result: pass
+  - policy: require-resource-limits
+    isValidatingPolicy: true
+    kind: Pod
+    resources: [bad-privileged-pod]
+    result: pass
+  - policy: disallow-hostpath
+    isValidatingPolicy: true
+    kind: Pod
+    resources: [bad-privileged-pod]
+    result: pass
+  - policy: disallow-latest-tag
+    isValidatingPolicy: true
+    kind: Pod
+    resources: [registry-port-tagged]
+    result: pass
+  - policy: disallow-latest-tag
+    isValidatingPolicy: true
+    kind: Pod
+    resources: [digest-only]
+    result: pass
+  - policy: disallow-latest-tag
+    isValidatingPolicy: true
+    kind: Pod
+    resources: [registry-port-untagged]
+    result: fail
+  - policy: disallow-latest-tag
+    isValidatingPolicy: true
+    kind: Pod
+    resources: [latest-with-digest]
+    result: fail
+  - policy: disallow-latest-tag
+    isValidatingPolicy: true
+    kind: Pod
+    resources: [init-container-latest]
+    result: fail
+  - policy: require-run-as-non-root
+    isValidatingPolicy: true
+    kind: Pod
+    resources: [container-overrides-pod-root]
+    result: pass
+  - policy: require-run-as-non-root
+    isValidatingPolicy: true
+    kind: Pod
+    resources: [pod-nonroot-container-uid0]
+    result: fail
+  - policy: require-run-as-non-root
+    isValidatingPolicy: true
+    kind: Pod
+    resources: [no-security-context]
+    result: fail
+  - policy: require-resource-limits
+    isValidatingPolicy: true
+    kind: Pod
+    resources: [init-container-no-limits]
+    result: fail
+  - policy: require-resource-limits
+    isValidatingPolicy: true
+    kind: Pod
+    resources: [limits-without-requests]
+    result: fail
+  - policy: disallow-hostpath
+    isValidatingPolicy: true
+    kind: CronJob
+    resources: [cronjob-hostpath]
+    result: fail

@@ -1,0 +1,154 @@
+# Small pods for the corner cases that the example Deployments do not cover.
+# Each one is built to be otherwise valid, so a fail points at one rule only.
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: registry-port-tagged
+  namespace: team-a
+spec:
+  containers:
+    - name: app
+      image: registry.local:5000/team/app:1.2.3
+      securityContext: {runAsNonRoot: true}
+      resources: {requests: {cpu: 10m, memory: 16Mi}, limits: {memory: 32Mi}}
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: registry-port-untagged
+  namespace: team-a
+spec:
+  containers:
+    - name: app
+      image: registry.local:5000/team/app
+      securityContext: {runAsNonRoot: true}
+      resources: {requests: {cpu: 10m, memory: 16Mi}, limits: {memory: 32Mi}}
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: digest-only
+  namespace: team-a
+spec:
+  containers:
+    - name: app
+      image: team/app@sha256:0000000000000000000000000000000000000000000000000000000000000000
+      securityContext: {runAsNonRoot: true}
+      resources: {requests: {cpu: 10m, memory: 16Mi}, limits: {memory: 32Mi}}
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: latest-with-digest
+  namespace: team-a
+spec:
+  containers:
+    - name: app
+      image: team/app:latest@sha256:0000000000000000000000000000000000000000000000000000000000000000
+      securityContext: {runAsNonRoot: true}
+      resources: {requests: {cpu: 10m, memory: 16Mi}, limits: {memory: 32Mi}}
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: init-container-latest
+  namespace: team-a
+spec:
+  initContainers:
+    - name: setup
+      image: team/setup:latest
+      securityContext: {runAsNonRoot: true}
+      resources: {requests: {cpu: 10m, memory: 16Mi}, limits: {memory: 32Mi}}
+  containers:
+    - name: app
+      image: team/app:1.2.3
+      securityContext: {runAsNonRoot: true}
+      resources: {requests: {cpu: 10m, memory: 16Mi}, limits: {memory: 32Mi}}
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: container-overrides-pod-root
+  namespace: team-a
+spec:
+  # Pod says root is fine, the container overrides it. The container wins.
+  securityContext: {runAsNonRoot: false}
+  containers:
+    - name: app
+      image: team/app:1.2.3
+      securityContext: {runAsNonRoot: true, runAsUser: 1000}
+      resources: {requests: {cpu: 10m, memory: 16Mi}, limits: {memory: 32Mi}}
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod-nonroot-container-uid0
+  namespace: team-a
+spec:
+  securityContext: {runAsNonRoot: true}
+  containers:
+    - name: app
+      image: team/app:1.2.3
+      securityContext: {runAsUser: 0}
+      resources: {requests: {cpu: 10m, memory: 16Mi}, limits: {memory: 32Mi}}
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: no-security-context
+  namespace: team-a
+spec:
+  containers:
+    - name: app
+      image: team/app:1.2.3
+      resources: {requests: {cpu: 10m, memory: 16Mi}, limits: {memory: 32Mi}}
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: init-container-no-limits
+  namespace: team-a
+spec:
+  securityContext: {runAsNonRoot: true}
+  initContainers:
+    - name: setup
+      image: team/setup:1.0.0
+  containers:
+    - name: app
+      image: team/app:1.2.3
+      resources: {requests: {cpu: 10m, memory: 16Mi}, limits: {memory: 32Mi}}
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: limits-without-requests
+  namespace: team-a
+spec:
+  securityContext: {runAsNonRoot: true}
+  containers:
+    - name: app
+      image: team/app:1.2.3
+      resources: {limits: {memory: 32Mi}}
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: cronjob-hostpath
+  namespace: team-a
+spec:
+  schedule: "0 3 * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          restartPolicy: Never
+          securityContext: {runAsNonRoot: true}
+          containers:
+            - name: job
+              image: team/job:1.0.0
+              resources: {requests: {cpu: 10m, memory: 16Mi}, limits: {memory: 32Mi}}
+              volumeMounts: [{name: logs, mountPath: /logs}]
+          volumes:
+            - name: logs
+              hostPath: {path: /var/log}
