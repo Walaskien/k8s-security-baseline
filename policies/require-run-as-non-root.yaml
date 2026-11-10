@@ -1,0 +1,62 @@
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
+metadata:
+  name: require-run-as-non-root
+  annotations:
+    policies.kyverno.io/title: Require non-root containers
+    policies.kyverno.io/severity: high
+    policies.kyverno.io/minversion: 1.19.0
+    policies.kyverno.io/description: >-
+      A process running as UID 0 in a container is one escape bug away from root
+      on the node. Every container must run as non-root, set either on the pod or
+      on the container, and UID 0 is refused even when runAsNonRoot is missing.
+spec:
+  validationActions: [Deny]
+  evaluation:
+    background:
+      enabled: true
+  matchConstraints:
+    resourceRules:
+      - apiGroups: [""]
+        apiVersions: [v1]
+        operations: [CREATE, UPDATE]
+        resources: [pods]
+      - apiGroups: [apps]
+        apiVersions: [v1]
+        operations: [CREATE, UPDATE]
+        resources: [deployments, statefulsets, daemonsets]
+      - apiGroups: [batch]
+        apiVersions: [v1]
+        operations: [CREATE, UPDATE]
+        resources: [jobs, cronjobs]
+    # System namespaces run host-level pods by design. kyverno is excluded so a
+    # bad policy cannot block Kyverno's own restart.
+    namespaceSelector:
+      matchExpressions:
+        - key: kubernetes.io/metadata.name
+          operator: NotIn
+          values: [kube-system, kube-public, kube-node-lease, kyverno]
+  variables:
+    - name: podSpec
+      expression: >-
+        object.kind == 'CronJob' ? object.spec.jobTemplate.spec.template.spec :
+        (has(object.spec.template) ? object.spec.template.spec : object.spec)
+    # initContainers run with the same privileges, so they get the same rules.
+    - name: containers
+      expression: >-
+        variables.podSpec.containers + variables.podSpec.?initContainers.orValue([])
+    - name: podNonRoot
+      expression: variables.podSpec.?securityContext.?runAsNonRoot.orValue(false)
+    # 1 means "not set" and passes the UID check below. An image whose own user is
+    # root is caught by the runAsNonRoot rule instead.
+    - name: podUser
+      expression: variables.podSpec.?securityContext.?runAsUser.orValue(1)
+  validations:
+    - expression: >-
+        variables.containers.all(c,
+        c.?securityContext.?runAsNonRoot.orValue(variables.podNonRoot) == true)
+      message: "runAsNonRoot must be true on the pod or on every container."
+    - expression: >-
+        variables.containers.all(c,
+        c.?securityContext.?runAsUser.orValue(variables.podUser) != 0)
+      message: "Running as UID 0 is not allowed."

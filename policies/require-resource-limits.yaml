@@ -1,0 +1,56 @@
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
+metadata:
+  name: require-resource-limits
+  annotations:
+    policies.kyverno.io/title: Require requests and a memory limit
+    policies.kyverno.io/severity: medium
+    policies.kyverno.io/minversion: 1.19.0
+    policies.kyverno.io/description: >-
+      Without a memory limit one leaking container takes the node down with it, and
+      without requests the scheduler is guessing. A CPU limit is not required: it
+      mostly causes throttling, the CPU request is what protects neighbours.
+spec:
+  validationActions: [Deny]
+  evaluation:
+    background:
+      enabled: true
+  matchConstraints:
+    resourceRules:
+      - apiGroups: [""]
+        apiVersions: [v1]
+        operations: [CREATE, UPDATE]
+        resources: [pods]
+      - apiGroups: [apps]
+        apiVersions: [v1]
+        operations: [CREATE, UPDATE]
+        resources: [deployments, statefulsets, daemonsets]
+      - apiGroups: [batch]
+        apiVersions: [v1]
+        operations: [CREATE, UPDATE]
+        resources: [jobs, cronjobs]
+    # System namespaces run host-level pods by design. kyverno is excluded so a
+    # bad policy cannot block Kyverno's own restart.
+    namespaceSelector:
+      matchExpressions:
+        - key: kubernetes.io/metadata.name
+          operator: NotIn
+          values: [kube-system, kube-public, kube-node-lease, kyverno]
+  variables:
+    - name: podSpec
+      expression: >-
+        object.kind == 'CronJob' ? object.spec.jobTemplate.spec.template.spec :
+        (has(object.spec.template) ? object.spec.template.spec : object.spec)
+    # initContainers run with the same privileges, so they get the same rules.
+    - name: containers
+      expression: >-
+        variables.podSpec.containers + variables.podSpec.?initContainers.orValue([])
+  validations:
+    - expression: >-
+        variables.containers.all(c, c.?resources.?limits.?memory.hasValue())
+      message: "Every container needs resources.limits.memory."
+    - expression: >-
+        variables.containers.all(c,
+        c.?resources.?requests.?cpu.hasValue() &&
+        c.?resources.?requests.?memory.hasValue())
+      message: "Every container needs resources.requests.cpu and resources.requests.memory."
