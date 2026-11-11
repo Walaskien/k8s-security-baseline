@@ -57,8 +57,8 @@ scan-config:
 
 # Fails on fixable CRITICAL findings only. HIGH is printed so it is visible.
 scan-image:
-	$(RUN_TRIVY) $(TRIVY) image --quiet --ignore-unfixed --severity HIGH,CRITICAL $(IMAGE)
-	$(RUN_TRIVY) $(TRIVY) image --quiet --ignore-unfixed --severity CRITICAL --exit-code 1 $(IMAGE)
+	$(RUN_TRIVY) $(TRIVY) image --quiet --ignore-unfixed --ignorefile .trivyignore.yaml --severity HIGH,CRITICAL $(IMAGE)
+	$(RUN_TRIVY) $(TRIVY) image --quiet --ignore-unfixed --ignorefile .trivyignore.yaml --severity CRITICAL --exit-code 1 $(IMAGE)
 
 secrets:
 	$(RUN) -e GIT_CONFIG_COUNT=1 -e GIT_CONFIG_KEY_0=safe.directory -e GIT_CONFIG_VALUE_0=/work \

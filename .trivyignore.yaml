@@ -1,4 +1,11 @@
 # Accepted findings, each with the reason. Everything else fails the build.
+vulnerabilities:
+  - id: CVE-2026-111497
+    statement: >-
+      Found by the first CI run: brotli-libs 1.2.0-r1 in nginx-unprivileged
+      1.30.6-alpine, fixed in 1.2.1-r0. No newer tag of the image exists yet, and
+      this nginx does not decode brotli. Delete the entry once the image is rebuilt.
+
 misconfigurations:
   - id: KSV-0125
     statement: >-
