@@ -55,7 +55,7 @@ On your own cluster, start with `kubectl apply -f baseline/namespaces.yaml`, the
 
 ## Verified
 
-Run on macOS (arm64) with Docker through Colima, in the same containers the Makefile uses. The repository had not been pushed when this was written.
+Locally on macOS (arm64) with Docker through Colima, in the same containers the Makefile uses, and then on GitHub Actions.
 
 | Check | Result |
 |---|---|
@@ -68,13 +68,12 @@ Run on macOS (arm64) with Docker through Colima, in the same containers the Make
 | gitleaks 8.30.1, git history and files | no leaks. As a control, a made-up GitHub token in a scratch file was found |
 | actionlint 1.7.12 on `ci.yml`, shellcheck 0.10.0 on `scripts/` | no findings |
 | the good image with `--read-only --tmpfs /tmp --user 10101 --cap-drop ALL` in plain Docker | starts and answers 200, so the securityContext in the manifest does not break nginx |
+| GitHub Actions: `lint`, `policies`, `scan`, `secrets`, `e2e` (see the badge) | green. The kind e2e (`scripts/e2e.sh`, Kyverno 1.19.2 from the Helm chart) reports 30 checks passed: 20 `kubectl auth can-i` checks per role, seven bad manifests rejected with the expected policy or Pod Security message, two accepted, and the good Deployment rolled out |
 
-Not verified, and the reason:
+Not verified:
 
-- **The kind e2e job.** Not run here on purpose, the machine is too small to keep a cluster alive. `scripts/e2e.sh`, the Kyverno Helm install, how a real API server words the denials and the rollout of the good Deployment have not been executed anywhere yet; the first run is in GitHub Actions.
-- **`make scan-image`** (trivy on the nginx image). Not run locally. It fails on fixable CRITICAL findings only, so it can turn red when a new one appears; the fix is a newer tag.
-- **GitHub Actions as a whole.** The workflow passes actionlint but has not run.
 - **NetworkPolicy enforcement.** Nothing here sends traffic. See below.
+- **`make scan-image`** is green only because of a documented exception: the first CI run found a fixable CRITICAL (`brotli-libs`) in the pinned nginx image and no newer tag was rebuilt yet. The entry is in `.trivyignore.yaml` and has to go once the image is rebuilt. The check can turn red whenever a new finding appears; the fix is a newer tag.
 
 ## Limitations
 
