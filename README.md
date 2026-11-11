@@ -68,7 +68,7 @@ Locally on macOS (arm64) with Docker through Colima, in the same containers the 
 | gitleaks 8.30.1, git history and files | no leaks. As a control, a made-up GitHub token in a scratch file was found |
 | actionlint 1.7.12 on `ci.yml`, shellcheck 0.10.0 on `scripts/` | no findings |
 | the good image with `--read-only --tmpfs /tmp --user 10101 --cap-drop ALL` in plain Docker | starts and answers 200, so the securityContext in the manifest does not break nginx |
-| GitHub Actions: `lint`, `policies`, `scan`, `secrets`, `e2e` (see the badge) | green. The kind e2e (`scripts/e2e.sh`, Kyverno 1.19.2 from the Helm chart) reports 30 checks passed: 20 `kubectl auth can-i` checks per role, seven bad manifests rejected with the expected policy or Pod Security message, two accepted, and the good Deployment rolled out |
+| GitHub Actions: `lint`, `policies`, `scan`, `secrets`, `e2e` (see the badge) | green. The kind e2e (`scripts/e2e.sh`, Kyverno 1.19.2 from the Helm chart) reports 30 checks passed: 20 `kubectl auth can-i` checks per role, seven rejections of bad manifests with the expected policy or Pod Security message, two acceptances, and the good Deployment rolled out |
 
 Not verified:
 
