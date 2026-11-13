@@ -10,6 +10,7 @@ KYVERNO_CLI := ghcr.io/kyverno/kyverno-cli:v1.19.2
 TRIVY       := ghcr.io/aquasecurity/trivy:0.76.2
 GITLEAKS    := ghcr.io/gitleaks/gitleaks:v8.30.1
 ACTIONLINT  := rhysd/actionlint:1.7.12
+SHELLCHECK  := koalaman/shellcheck:v0.10.0
 export KUBE_LINTER KYVERNO_CLI TRIVY
 
 RUN       := docker run --rm -v "$(CURDIR)":/work -w /work
@@ -22,7 +23,7 @@ CRD_CATALOG := https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.G
 
 IMAGE := $(shell awk '/image:/ {print $$2; exit}' examples/good/deployment.yaml)
 
-.PHONY: check lint policy-test negative scan-config scan-image secrets workflow-lint e2e help
+.PHONY: check lint policy-test negative scan-config scan-image secrets workflow-lint shellcheck e2e help
 
 help:
 	@echo "check          lint + policy-test + negative + scan-config + secrets (no cluster needed)"
@@ -33,6 +34,7 @@ help:
 	@echo "scan-image     trivy image on the image used by examples/good"
 	@echo "secrets        gitleaks over the files and the git history"
 	@echo "workflow-lint  actionlint"
+	@echo "shellcheck     shellcheck on scripts/*.sh"
 	@echo "e2e            scripts/e2e.sh against the current kubectl context"
 
 check: lint policy-test negative scan-config secrets
@@ -67,6 +69,9 @@ secrets:
 
 workflow-lint:
 	$(RUN) $(ACTIONLINT)
+
+shellcheck:
+	$(RUN) $(SHELLCHECK) -x scripts/*.sh
 
 e2e:
 	scripts/e2e.sh

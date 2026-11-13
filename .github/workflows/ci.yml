@@ -23,6 +23,7 @@ jobs:
       - run: pip install -r requirements-dev.txt
       - run: make lint
       - run: make workflow-lint
+      - run: make shellcheck
 
   policies:
     runs-on: ubuntu-24.04
